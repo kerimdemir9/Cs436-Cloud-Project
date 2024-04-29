@@ -29,7 +29,6 @@ public class CustomerService {
     final CustomerRepository customerRepository;
     final CustomerLogRepository customerLogRepository;
     final CustomerValidator customerValidator;
-
     final ObjectMapper objectMapper;
 
 
