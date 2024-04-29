@@ -11,7 +11,7 @@ import java.util.Date;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "transaction", schema = "bank")
+@Table(name = "transaction", schema = "bank_cloud")
 @Entity
 public class TransactionModel {
     @Id
@@ -22,14 +22,16 @@ public class TransactionModel {
     @Column(name = "amount")
     private Double amount;
 
-    @CreationTimestamp
     @Column(insertable = false, updatable = false)
     private Date created;
 
-
     @ManyToOne
     @JsonBackReference
-    private CustomerModel customer;
+    private CustomerModel sender;
+    
+    @ManyToOne
+    @JsonBackReference
+    private CustomerModel receiver;
 }
 
 

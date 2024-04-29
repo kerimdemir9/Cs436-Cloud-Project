@@ -9,6 +9,6 @@ import java.util.Date;
 
 @Repository
 public interface TransactionRepository extends PagingAndSortingRepository<TransactionModel, Integer> {
-    Page<TransactionModel> findAllByCustomer(CustomerModel customerModel, Pageable pageable);
-    Page<TransactionModel> findAllByCustomerAndCreatedBeforeAndCreatedAfter(CustomerModel customerModel, Date createdBefore, Date createdAfter, Pageable pageable);
+    Page<TransactionModel> findAllByReceiver(CustomerModel receiver, Pageable pageable);
+    Page<TransactionModel> findAllByReceiverAndCreatedBeforeAndCreatedAfter(CustomerModel receiver, Date createdBefore, Date createdAfter, Pageable pageable);
 }

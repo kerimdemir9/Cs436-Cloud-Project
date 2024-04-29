@@ -42,7 +42,8 @@ public class TransactionService {
         return getTransaction(id);
     }
 
-    public GenericPagedModel<TransactionModel> findAll(int page, int size, String sortBy, SortDirection sortDirection) {
+    public GenericPagedModel<TransactionModel> findAll
+            (int page, int size, String sortBy, SortDirection sortDirection) {
         try {
             val result = sortDirection.equals(SortDirection.Ascending)
                     ? transactionRepository.findAll(PageRequest.of(page, size, Sort.by(sortBy).ascending()))
@@ -62,12 +63,13 @@ public class TransactionService {
         }
     }
 
-    public GenericPagedModel<TransactionModel> findAllByCustomer(CustomerModel customerModel, int page, int size, String sortBy, SortDirection sortDirection) {
+    public GenericPagedModel<TransactionModel> findAllByReceiver
+            (CustomerModel customerModel, int page, int size, String sortBy, SortDirection sortDirection) {
         try {
             customerValidator.validate(customerModel);
             val result = sortDirection.equals(SortDirection.Ascending)
-                    ? transactionRepository.findAllByCustomer(customerModel, PageRequest.of(page, size, Sort.by(sortBy).ascending()))
-                    : transactionRepository.findAllByCustomer(customerModel, PageRequest.of(page, size, Sort.by(sortBy).descending()));
+                    ? transactionRepository.findAllByReceiver(customerModel, PageRequest.of(page, size, Sort.by(sortBy).ascending()))
+                    : transactionRepository.findAllByReceiver(customerModel, PageRequest.of(page, size, Sort.by(sortBy).descending()));
             if (result.isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No customer:".concat(customerModel.toString()));
             }
@@ -83,12 +85,13 @@ public class TransactionService {
         }
     }
 
-    public GenericPagedModel<TransactionModel> findAllByCustomerAndCreatedBeforeAndCreatedAfter(CustomerModel customerModel, Date createdBefore, Date createdAfter, int page, int size, String sortBy, SortDirection sortDirection) {
+    public GenericPagedModel<TransactionModel> findAllByReceiverAndCreatedBeforeAndCreatedAfter
+            (CustomerModel customerModel, Date createdBefore, Date createdAfter, int page, int size, String sortBy, SortDirection sortDirection) {
         try {
             customerValidator.validate(customerModel);
             val result = sortDirection.equals(SortDirection.Ascending)
-                    ? transactionRepository.findAllByCustomerAndCreatedBeforeAndCreatedAfter(customerModel, createdAfter, createdBefore, PageRequest.of(page, size, Sort.by(sortBy).ascending()))
-                    : transactionRepository.findAllByCustomerAndCreatedBeforeAndCreatedAfter(customerModel, createdAfter, createdBefore, PageRequest.of(page, size, Sort.by(sortBy).descending()));
+                    ? transactionRepository.findAllByReceiverAndCreatedBeforeAndCreatedAfter(customerModel, createdAfter, createdBefore, PageRequest.of(page, size, Sort.by(sortBy).ascending()))
+                    : transactionRepository.findAllByReceiverAndCreatedBeforeAndCreatedAfter(customerModel, createdAfter, createdBefore, PageRequest.of(page, size, Sort.by(sortBy).descending()));
             if(result.isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No transaction between dates: ".concat(createdBefore.toString()).concat(" | ").concat(createdAfter.toString()).concat(" of customer: ").concat(customerModel.toString()));
             }

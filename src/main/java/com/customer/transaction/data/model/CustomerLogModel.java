@@ -13,7 +13,7 @@ import java.util.Date;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "customer_log", schema = "bank")
+@Table(name = "customer_log", schema = "bank_cloud")
 @Entity
 public class CustomerLogModel {
     @Id
@@ -29,11 +29,9 @@ public class CustomerLogModel {
     @Column(name = "log_type")
     private String logType;
 
-    @CreationTimestamp
     @Column(name = "created", insertable = false, updatable = false)
     private Date created;
 
     @Column(name = "customer_id")
     private Integer customerId;
-
 }

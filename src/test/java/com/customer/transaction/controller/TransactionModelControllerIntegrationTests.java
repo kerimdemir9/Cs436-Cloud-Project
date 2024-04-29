@@ -56,7 +56,8 @@ public class TransactionModelControllerIntegrationTests extends TestBase {
                 .builder()
                 .amount(5000.0)
                 .created(new Date(Instant.now().toEpochMilli()))
-                .customer(newCustomer1Model)
+                .sender(newCustomer1Model)
+                .receiver(newCustomer2Model)
                 .build());
     }
 
@@ -65,7 +66,8 @@ public class TransactionModelControllerIntegrationTests extends TestBase {
                 .builder()
                 .amount(1000.0)
                 .created(new Date(Instant.now().toEpochMilli()))
-                .customer(newCustomer2Model)
+                .sender(newCustomer2Model)
+                .receiver(newCustomer1Model)
                 .build());
     }
 
@@ -89,7 +91,7 @@ public class TransactionModelControllerIntegrationTests extends TestBase {
 
         assertTrue(transaction.getContent()
                 .stream()
-                .allMatch(t -> t.getCustomerId().equals(newCustomer1Model.getId())));
+                .allMatch(t -> t.getReceiverId().equals(newCustomer1Model.getId())));
     }
 
     public void testPagedDataOfTwo(TransactionViewPagedData transaction) {
@@ -97,7 +99,7 @@ public class TransactionModelControllerIntegrationTests extends TestBase {
 
         assertTrue(transaction.getContent()
                 .stream()
-                .allMatch(t -> t.getCustomerId().equals(newCustomer2Model.getId())));
+                .allMatch(t -> t.getReceiverId().equals(newCustomer2Model.getId())));
     }
 
 
@@ -110,6 +112,7 @@ public class TransactionModelControllerIntegrationTests extends TestBase {
     @Test
     public void get_transaction_by_id_test() {
         insertNewCustomer1();
+        insertNewCustomer2();
         insertNewTransaction1();
 
         val url = RestConfiguration.LOCALHOST
@@ -123,7 +126,8 @@ public class TransactionModelControllerIntegrationTests extends TestBase {
         assertNotNull(response.getBody());
 
         assertEquals(String.valueOf(newTransaction1Model.getId()), String.valueOf(response.getBody().getId()));
-        assertEquals(String.valueOf(newTransaction1Model.getCustomer().getId()), String.valueOf(response.getBody().getCustomerId()));
+        assertEquals(String.valueOf(newTransaction1Model.getSender().getId()), String.valueOf(response.getBody().getSenderId()));
+        assertEquals(String.valueOf(newTransaction1Model.getReceiver().getId()), String.valueOf(response.getBody().getReceiverId()));
         assertEquals(String.valueOf(newTransaction1Model.getAmount()), String.valueOf(response.getBody().getAmount()));
     }
 
@@ -164,7 +168,7 @@ public class TransactionModelControllerIntegrationTests extends TestBase {
     }
 
     @Test
-    public void get_customers_with_exception_test() {
+    public void get_transactions_with_exception_test() {
         val url = RestConfiguration.LOCALHOST
                 .concat(String.valueOf(port))
                 .concat("/v1/transactions/find_all");
@@ -176,25 +180,26 @@ public class TransactionModelControllerIntegrationTests extends TestBase {
     }
 
     @Test
-    public void get_transactions_by_customer_test() {
+    public void get_transactions_by_receiver_test() {
         insertNewCustomer1();
+        insertNewCustomer2();
         insertNewTransaction1();
 
         val url = RestConfiguration.LOCALHOST
                 .concat(String.valueOf(port))
-                .concat("/v1/transactions/find_all_by_customer/")
-                .concat(newCustomer1Model.getId().toString());
+                .concat("/v1/transactions/find_all_by_receiver/")
+                .concat(newCustomer2Model.getId().toString());
 
         val response = restTemplate.getForEntity(url, TransactionViewPagedData.class);
         assertTrue(StringUtils.isNotBlank(response.toString()));
         assertNotNull(response.getBody());
 
-        testPagedDataOfOne(response.getBody());
+        testPagedDataOfTwo(response.getBody());
     }
 
 
     @Test
-    public void get_transactions_by_customer_and_created_before_and_created_after_test() {
+    public void get_transactions_by_receiver_and_created_before_and_created_after_test() {
         insertNewCustomer1();
         insertNewCustomer2();
 
@@ -206,14 +211,14 @@ public class TransactionModelControllerIntegrationTests extends TestBase {
 
         val url1 = RestConfiguration.LOCALHOST
                 .concat(String.valueOf(port))
-                .concat("/v1/transactions/find_all_by_customer_created_before_created_after/")
+                .concat("/v1/transactions/find_all_by_receiver_created_before_created_after/")
                 .concat(newCustomer1Model.getId().toString())
                 .concat("?createdBefore=").concat(String.valueOf(yesterday))
                 .concat("&createdAfter=").concat(String.valueOf(tomorrow));
 
         val url2 = RestConfiguration.LOCALHOST
                 .concat(String.valueOf(port))
-                .concat("/v1/transactions/find_all_by_customer_created_before_created_after/")
+                .concat("/v1/transactions/find_all_by_receiver_created_before_created_after/")
                 .concat(newCustomer2Model.getId().toString())
                 .concat("?createdBefore=").concat(String.valueOf(yesterday))
                 .concat("&createdAfter=").concat(String.valueOf(tomorrow));
@@ -234,10 +239,12 @@ public class TransactionModelControllerIntegrationTests extends TestBase {
     @Test
     public void insert_new_transaction_test() {
         insertNewCustomer1();
+        insertNewCustomer2();
 
         val transactionToPost = TransactionView.builder()
                 .amount(50000.0)
-                .customerId(newCustomer1Model.getId())
+                .receiverId(newCustomer1Model.getId())
+                .senderId(newCustomer2Model.getId())
                 .build();
 
         val url = RestConfiguration.LOCALHOST
@@ -254,7 +261,8 @@ public class TransactionModelControllerIntegrationTests extends TestBase {
         assertNotNull(found);
         assertEquals(String.valueOf(response.getBody().getId()), found.getId().toString());
         assertEquals(String.valueOf(response.getBody().getAmount()), found.getAmount().toString());
-        assertEquals(String.valueOf(response.getBody().getCustomerId()), found.getCustomer().getId().toString());
+        assertEquals(String.valueOf(response.getBody().getReceiverId()), found.getReceiver().getId().toString());
+        assertEquals(String.valueOf(response.getBody().getSenderId()), found.getSender().getId().toString());
     }
 
 
@@ -264,14 +272,15 @@ public class TransactionModelControllerIntegrationTests extends TestBase {
 
         val transactionToPost = TransactionView.builder()
                 .amount(50000.0)
-                .customerId(null)
+                .receiverId(null)
+                .senderId(null)
                 .build();
 
         val url = RestConfiguration.LOCALHOST
                 .concat(String.valueOf(port))
                 .concat("/v1/transactions/save");
 
-        try { // restTemplate => HttpClientError
+        try {
             restTemplate.postForEntity(url, new HttpEntity<>(transactionToPost), TransactionView.class);
         } catch (final HttpClientErrorException ex) {
             assertThat(ex.getMessage(), containsString("406"));
@@ -282,10 +291,12 @@ public class TransactionModelControllerIntegrationTests extends TestBase {
     @Test
     public void insert_new_transaction_with_exception_test2() {
         insertNewCustomer1();
+        insertNewCustomer2();
 
         val transactionToPost = TransactionView.builder()
                 .amount(null)
-                .customerId(newCustomer1Model.getId())
+                .receiverId(newCustomer1Model.getId())
+                .senderId(newCustomer2Model.getId())
                 .build();
 
         val url = RestConfiguration.LOCALHOST
@@ -303,10 +314,12 @@ public class TransactionModelControllerIntegrationTests extends TestBase {
     @Test
     public void insert_new_transaction_with_exception_test3() {
         insertNewCustomer1();
+        insertNewCustomer2();
 
         val transactionToPost = TransactionView.builder()
                 .amount(-1000.0)
-                .customerId(newCustomer1Model.getId())
+                .receiverId(newCustomer1Model.getId())
+                .senderId(newCustomer2Model.getId())
                 .build();
 
         val url = RestConfiguration.LOCALHOST
@@ -324,6 +337,7 @@ public class TransactionModelControllerIntegrationTests extends TestBase {
     @Test
     public void delete_transaction_test() {
         insertNewCustomer1();
+        insertNewCustomer2();
         insertNewTransaction1();
 
 
@@ -338,7 +352,7 @@ public class TransactionModelControllerIntegrationTests extends TestBase {
         assertNotNull(response.getBody());
         assertEquals(String.valueOf(response.getBody().getId()), (newTransaction1Model.getId().toString()));
 
-        try { // Using service => ResponseStatusException
+        try { 
             transactionService.findById(newTransaction1Model.getId());
         } catch (final ResponseStatusException ex) {
             assertThat(ex.getMessage(), containsString("404"));

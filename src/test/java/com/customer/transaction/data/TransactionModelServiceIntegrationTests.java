@@ -9,6 +9,7 @@ import lombok.val;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.web.server.ResponseStatusException;
+
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -45,7 +46,8 @@ public class TransactionModelServiceIntegrationTests extends TestBase {
         newTransaction1Model = transactionService.save(TransactionModel
                 .builder()
                 .amount(5000.0)
-                .customer(newCustomer1Model)
+                .sender(newCustomer1Model)
+                .receiver(newCustomer2Model)
                 .build());
     }
 
@@ -53,7 +55,8 @@ public class TransactionModelServiceIntegrationTests extends TestBase {
         newTransaction2Model = transactionService.save(TransactionModel
                 .builder()
                 .amount(5000.0)
-                .customer(newCustomer2Model)
+                .sender(newCustomer2Model)
+                .receiver(newCustomer1Model)
                 .build());
     }
 
@@ -74,7 +77,7 @@ public class TransactionModelServiceIntegrationTests extends TestBase {
 
         assertTrue(transaction.getContent()
                 .stream()
-                .allMatch(t -> t.getCustomer().getId().equals(newCustomer1Model.getId())));
+                .allMatch(t -> t.getReceiver().getId().equals(newCustomer1Model.getId())));
     }
 
     public void testCollectionOfTwo(GenericPagedModel<TransactionModel> transaction) {
@@ -82,7 +85,7 @@ public class TransactionModelServiceIntegrationTests extends TestBase {
 
         assertTrue(transaction.getContent()
                 .stream()
-                .allMatch(t -> t.getCustomer().getId().equals(newCustomer2Model.getId())));
+                .allMatch(t -> t.getReceiver().getId().equals(newCustomer2Model.getId())));
     }
 
     @Before
@@ -94,6 +97,7 @@ public class TransactionModelServiceIntegrationTests extends TestBase {
     @Test
     public void insert_transaction_test() {
         insertNewCustomer1();
+        insertNewCustomer2();
         insertNewTransaction1();
         assertNotNull(newTransaction1Model);
     }
@@ -101,12 +105,14 @@ public class TransactionModelServiceIntegrationTests extends TestBase {
     @Test
     public void update_transaction_test() {
         insertNewCustomer1();
+        insertNewCustomer2();
         insertNewTransaction1();
 
         val updated = transactionService.save(TransactionModel
                 .builder()
                 .id(newTransaction1Model.getId())
-                .customer(newCustomer1Model)
+                .sender(newCustomer1Model)
+                .receiver(newCustomer2Model)
                 .amount(800.0)
                 .build());
 
@@ -117,6 +123,7 @@ public class TransactionModelServiceIntegrationTests extends TestBase {
     @Test
     public void find_transaction_by_id_test() {
         insertNewCustomer1();
+        insertNewCustomer2();
         insertNewTransaction1();
 
         val found = transactionService.findById(newTransaction1Model.getId());
@@ -124,7 +131,8 @@ public class TransactionModelServiceIntegrationTests extends TestBase {
         assertNotNull(found);
         assertEquals(newTransaction1Model.getId(), found.getId());
         assertEquals(newTransaction1Model.getAmount(), found.getAmount());
-        assertEquals(newTransaction1Model.getCustomer().getId(), found.getCustomer().getId());
+        assertEquals(newTransaction1Model.getSender().getId(), found.getSender().getId());
+        assertEquals(newTransaction1Model.getReceiver().getId(), found.getReceiver().getId());
     }
 
     @Test
@@ -134,20 +142,22 @@ public class TransactionModelServiceIntegrationTests extends TestBase {
         insertNewTransaction1();
         insertNewTransaction2();
 
-        testCollection(transactionService.findAll(0,10,"id", SortDirection.Descending));
+        testCollection(transactionService.findAll(0, 10, "id", SortDirection.Descending));
     }
 
 
     @Test
-    public void find_all_by_customer_test() {
+    public void find_all_by_receiver_test() {
         insertNewCustomer1();
         insertNewCustomer2();
 
         insertNewTransaction1();
         insertNewTransaction2();
 
-        val result1 = transactionService.findAllByCustomer(newCustomer1Model,0, 10, "id", SortDirection.Descending);
-        val result2 = transactionService.findAllByCustomer(newCustomer2Model,0, 10, "id", SortDirection.Descending);
+        val result1 = transactionService.findAllByReceiver
+                (newCustomer1Model, 0, 10, "id", SortDirection.Descending);
+        val result2 = transactionService.findAllByReceiver
+                (newCustomer2Model, 0, 10, "id", SortDirection.Descending);
 
 
         assertNotNull(result1);
@@ -159,7 +169,7 @@ public class TransactionModelServiceIntegrationTests extends TestBase {
 
 
     @Test
-    public void find_all_by_customer_created_before_and_created_after_test() {
+    public void find_all_by_receiver_created_before_and_created_after_test() {
         insertNewCustomer1();
         insertNewCustomer2();
 
@@ -169,16 +179,19 @@ public class TransactionModelServiceIntegrationTests extends TestBase {
         val yesterday = new Date(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli());
         val tomorrow = new Date(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
 
-        val res1 = transactionService.findAllByCustomerAndCreatedBeforeAndCreatedAfter(newCustomer1Model, yesterday, tomorrow , 0, 10, "id", SortDirection.Descending);
-        val res2 = transactionService.findAllByCustomerAndCreatedBeforeAndCreatedAfter(newCustomer2Model, yesterday, tomorrow , 0, 10, "id", SortDirection.Descending);
+        val res1 = transactionService.findAllByReceiverAndCreatedBeforeAndCreatedAfter
+                (newCustomer1Model, yesterday, tomorrow, 0, 10, "id", SortDirection.Descending);
+        val res2 = transactionService.findAllByReceiverAndCreatedBeforeAndCreatedAfter
+                (newCustomer2Model, yesterday, tomorrow, 0, 10, "id", SortDirection.Descending);
 
         testCollectionOfOne(res1);
         testCollectionOfTwo(res2);
     }
 
-    @Test(expected = ResponseStatusException.class)
+    @Test
     public void delete_transaction_test() {
         insertNewCustomer1();
+        insertNewCustomer2();
         insertNewTransaction1();
 
         val deleted = transactionService.hardDelete(newTransaction1Model.getId());

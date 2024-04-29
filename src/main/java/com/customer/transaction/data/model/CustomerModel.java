@@ -12,7 +12,7 @@ import java.util.Collection;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-@Table(name = "customer", schema = "bank")
+@Table(name = "customer", schema = "bank_cloud")
 @Entity
 public class CustomerModel {
     @Id
@@ -28,11 +28,15 @@ public class CustomerModel {
     @Column(name = "balance")
     private Double balance;
 
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @ToString.Exclude
     @JsonIgnore
-    private Collection<TransactionModel> transactions;
+    @JsonManagedReference
+    Collection<TransactionModel> transactionsSent;
 
-
+    @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ToString.Exclude
+    @JsonIgnore
+    @JsonManagedReference
+    Collection<TransactionModel> transactionsReceived;
 }
