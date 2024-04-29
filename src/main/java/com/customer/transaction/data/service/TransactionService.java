@@ -109,6 +109,15 @@ public class TransactionService {
     public TransactionModel save(TransactionModel transactionModel) {
         try {
             transactionValidator.validate(transactionModel);
+            
+            val sender = customerRepository.findById(transactionModel.getSender().getId()).get();
+            val receiver = customerRepository.findById(transactionModel.getReceiver().getId()).get();
+            
+            sender.setBalance(sender.getBalance() - transactionModel.getAmount());
+            receiver.setBalance(receiver.getBalance() + transactionModel.getAmount());
+            
+            customerRepository.save(sender);
+            customerRepository.save(receiver);
 
             log.info("Transaction saved: ". concat(transactionModel.toString()));
             return transactionRepository.save(transactionModel);
