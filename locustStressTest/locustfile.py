@@ -2,7 +2,7 @@ from locust import HttpUser, task, between
 
 
 class WebsiteUser(HttpUser):
-    host = "http://34.117.141.149:8888"
+    host = "http://130.211.24.150:8888"
 
     wait_time = between(1, 5)  # Simulates a wait time between tasks of 1 to 5 seconds
 
@@ -18,9 +18,9 @@ class WebsiteUser(HttpUser):
     def post_transaction(self):
         # Data to send in the POST request (as JSON)
         data = {
-            "amount": 10000.0,
-            "senderId": 10,
-            "receiverId": 12
+            "amount": 1.0,
+            "senderId": 43,
+            "receiverId": 1
         }
         headers = {'content-type': 'application/json'}
 

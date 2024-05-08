@@ -9,7 +9,7 @@ spring:
 #    username: root
 #    password: 111
 #    url: jdbc:mysql://35.225.76.23/bank_cloud
-    url: jdbc:mysql://10.0.0.3/bank_cloud
+    url: jdbc:mysql://10.0.0.9/bank_cloud
     username: root
     password:  Sabanci@123
   jpa:
