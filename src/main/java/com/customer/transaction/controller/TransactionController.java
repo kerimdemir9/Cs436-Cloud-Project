@@ -10,20 +10,22 @@ import com.customer.transaction.util.SortDirection;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-import static com.customer.transaction.controller.util.Parsers.tryParseInteger;
-import static com.customer.transaction.controller.util.Parsers.tryParseLong;
+import static com.customer.transaction.controller.util.Parsers.*;
 
 @RestController
 @Slf4j
 public class TransactionController {
 
+    private final RestTemplate restTemplate = new RestTemplate();
     final TransactionService transactionService;
     final CustomerService customerService;
 
@@ -32,6 +34,15 @@ public class TransactionController {
         this.transactionService = transactionService;
         this.customerService = customerService;
     }
+
+    // function url: https://us-central1-bankproject-424211.cloudfunctions.net/myDatabaseFunction?id=1
+    @RequestMapping(value = "/v1/transactions/calculate_user_average_income/{id}", method = RequestMethod.GET)
+    private ResponseEntity<Object> getUserAvgIncomeIdV1(@PathVariable String id) {
+        val url = "https://us-central1-bankproject-424211.cloudfunctions.net/myDatabaseFunction?id=".concat(id);
+        val req = restTemplate.exchange(url, HttpMethod.GET, null, Object.class);
+        return ResponseEntity.ok(req.getBody());
+    }
+    
 
     @RequestMapping(value = "/v1/transactions/{id}", method = RequestMethod.GET)
     private ResponseEntity<TransactionView> getTransactionByIdV1(@PathVariable String id) {
