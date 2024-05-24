@@ -1,10 +1,11 @@
 [Unit]
-Description=bankApplication
+Description=My Java Application
+After=network.target
 
 [Service]
 User=root
 WorkingDirectory=/home/kerimdemir
-ExecStart=java -jar customerModel.transactionModel-0.0.1-SNAPSHOT.jar
+ExecStart=/usr/bin/java -jar customerModel.transactionModel-0.0.1-SNAPSHOT.jar
 Restart=always
 RestartSec=3
 
